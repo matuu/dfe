@@ -1,0 +1,39 @@
+<h3>{{ title }}</h3>
+{{ formset.management_form }}
+{% if formset.total_error_count %}
+    <div class="errorlist">
+    {% for dict in formset.errors %}
+        {% for error in dict.values %}
+        <p class="alert alert-danger" data-nose="">
+            {{ error.0 }}
+        </p>
+        {% endfor %}
+    {% endfor %}
+    </div>
+{% endif %}
+<table class="table table-responsive table-striped table-hover table-bordered">
+    {% for form in formset %}
+        {% if forloop.first %}
+        <thead>
+            <tr>
+            {% for field in form.visible_fields %}
+                <th>{{ field.label|capfirst }}</th>
+            {% endfor %}
+            </tr>
+        </thead>
+        {% endif %}
+        <tr id="{{ forloop.counter }}">
+            {% for field in form.visible_fields %}
+            <td>
+            {% if forloop.first %}
+                  {% for hidden in form.hidden_fields %}
+                  {{ hidden }}
+                  {% endfor %}
+            {% endif %}
+            {{ field.errors.as_ul }}
+            {{ field }}
+            </td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+</table>

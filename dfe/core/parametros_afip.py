@@ -53,7 +53,7 @@ TIPO_DOCUMENTO = ((80, "CUIT"),
                   (96, "DNI"),
                   (99, "Doc. (Otro)"),)
 
-OLICUOTA_IVA = ((3,	0),
+ALICUOTA_IVA = ((3,	0),
                 (4,	10.5),
                 (5,	21),
                 (6,	27),

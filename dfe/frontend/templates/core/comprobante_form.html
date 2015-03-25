@@ -1,16 +1,15 @@
 {% extends "frontend/base.html" %}
-{% load crispy_forms_tags %}
+{% load bootstrap3 frontend_tags %}
 {% block content %}
 <h2>Nuevo comprobante</h2>
-    <form method="post" class="uniForm 'form-horizontal'">
+    <form method="post" novalidate="">
         <div class="col-md-6">
-            {%  csrf_token %}
-            {{ form|crispy }}
-            <input type="submit" value="Nuevo comprobante" />
-        </div>
-        <div class="col-md-6">
-            <h3>Ítems del comprobante</h3>
-
+            {% csrf_token %}
+            {% bootstrap_form form %}
+            {% render_formset_as_table formsets.0 'Ítems de la factura'%}
+            {% render_formset_as_table formsets.1 'Tributos adicionales' %}
+            {% render_formset_as_table formsets.2 'Comprobantes asociados' %}
+            <input class="btn btn-primary" type="submit" value="Nuevo comprobante" />
         </div>
     </form>
 {% endblock %}

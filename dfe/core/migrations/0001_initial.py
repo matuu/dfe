@@ -59,6 +59,7 @@ class Migration(SchemaMigration):
             ('fecha_vto_pago', self.gf('django.db.models.fields.DateField')(null=True)),
             ('fecha_servicio_desde', self.gf('django.db.models.fields.DateField')(null=True)),
             ('fecha_servicio_hasta', self.gf('django.db.models.fields.DateField')(null=True)),
+            ('estado_interno', self.gf('django.db.models.fields.IntegerField')(default=1)),
             ('observaciones', self.gf('django.db.models.fields.CharField')(max_length=512, null=True, blank=True)),
             ('resultado', self.gf('django.db.models.fields.CharField')(max_length=20, null=True, blank=True)),
             ('vencimiento', self.gf('django.db.models.fields.CharField')(max_length=20, null=True, blank=True)),
@@ -81,16 +82,16 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'core', ['ItemFactura'])
 
-        # Adding model 'OlicuotaIVAFactura'
-        db.create_table(u'core_olicuotaivafactura', (
+        # Adding model 'AlicuotaIVAFactura'
+        db.create_table(u'core_alicuotaivafactura', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('factura', self.gf('django.db.models.fields.related.ForeignKey')(related_name='olicuotas_iva', to=orm['core.Factura'])),
-            ('olicuota_iva', self.gf('django.db.models.fields.IntegerField')()),
-            ('olicuota_iva_valor', self.gf('django.db.models.fields.DecimalField')(max_digits=18, decimal_places=3)),
+            ('factura', self.gf('django.db.models.fields.related.ForeignKey')(related_name='alicuotas_iva', to=orm['core.Factura'])),
+            ('alicuota_iva', self.gf('django.db.models.fields.IntegerField')()),
+            ('alicuota_iva_valor', self.gf('django.db.models.fields.DecimalField')(max_digits=18, decimal_places=3)),
             ('base_imponible', self.gf('django.db.models.fields.DecimalField')(max_digits=18, decimal_places=3)),
             ('importe_iva', self.gf('django.db.models.fields.DecimalField')(max_digits=18, decimal_places=3)),
         ))
-        db.send_create_signal(u'core', ['OlicuotaIVAFactura'])
+        db.send_create_signal(u'core', ['AlicuotaIVAFactura'])
 
         # Adding model 'TributoFactura'
         db.create_table(u'core_tributofactura', (
@@ -128,8 +129,8 @@ class Migration(SchemaMigration):
         # Deleting model 'ItemFactura'
         db.delete_table(u'core_itemfactura')
 
-        # Deleting model 'OlicuotaIVAFactura'
-        db.delete_table(u'core_olicuotaivafactura')
+        # Deleting model 'AlicuotaIVAFactura'
+        db.delete_table(u'core_alicuotaivafactura')
 
         # Deleting model 'TributoFactura'
         db.delete_table(u'core_tributofactura')
@@ -139,6 +140,15 @@ class Migration(SchemaMigration):
 
 
     models = {
+        u'core.alicuotaivafactura': {
+            'Meta': {'object_name': 'AlicuotaIVAFactura'},
+            'alicuota_iva': ('django.db.models.fields.IntegerField', [], {}),
+            'alicuota_iva_valor': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'}),
+            'base_imponible': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'}),
+            'factura': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'alicuotas_iva'", 'to': u"orm['core.Factura']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'importe_iva': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'})
+        },
         u'core.cliente': {
             'Meta': {'object_name': 'Cliente'},
             'codigo_iibb': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
@@ -166,6 +176,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'Factura'},
             'cae': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
             'concepto': ('django.db.models.fields.IntegerField', [], {'default': '3'}),
+            'estado_interno': ('django.db.models.fields.IntegerField', [], {'default': '1'}),
             'fecha_comprobante': ('django.db.models.fields.DateField', [], {}),
             'fecha_servicio_desde': ('django.db.models.fields.DateField', [], {'null': 'True'}),
             'fecha_servicio_hasta': ('django.db.models.fields.DateField', [], {'null': 'True'}),
@@ -202,15 +213,6 @@ class Migration(SchemaMigration):
             'iva': ('django.db.models.fields.IntegerField', [], {}),
             'precio': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'}),
             'unidad': ('django.db.models.fields.IntegerField', [], {})
-        },
-        u'core.olicuotaivafactura': {
-            'Meta': {'object_name': 'OlicuotaIVAFactura'},
-            'base_imponible': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'}),
-            'factura': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'olicuotas_iva'", 'to': u"orm['core.Factura']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'importe_iva': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'}),
-            'olicuota_iva': ('django.db.models.fields.IntegerField', [], {}),
-            'olicuota_iva_valor': ('django.db.models.fields.DecimalField', [], {'max_digits': '18', 'decimal_places': '3'})
         },
         u'core.puntoventa': {
             'Meta': {'object_name': 'PuntoVenta'},

@@ -2,5 +2,7 @@
 
 {% block content %}
 <h2>Comprobantes</h2>
-
+    {% for c in object_list %}
+        {{ c }}
+    {% endfor %}
 {% endblock %}

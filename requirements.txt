@@ -7,5 +7,7 @@ m2crypto>=0.18
 -e git+https://github.com/reingart/pyafipws.git#egg=pyafipws
 # pysimplesoap - copia de la rama reingart
 -e git+https://github.com/matuu/pysimplesoap-for-pyafipws.git#egg=pysimplesoap-for-pyafipws
-django-crispy-forms==1.4.0
+#django-crispy-forms==1.4.0
+django-bootstrap3
 South==1.0.2
+-e git+https://github.com/matuu/django-enhanced-cbv.git#egg=django-enhanced-cbv

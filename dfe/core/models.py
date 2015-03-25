@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
+from decimal import Decimal
 from django.db import models
 
 from .parametros_afip import (
     CONCEPTO, TIPO_DOCUMENTO, TIPO_COMPROBANTE, MONEDA, FORMA_PAGO, PROVINCIA,
-    OLICUOTA_IVA, UNIDAD, TIPO_ATRIBUTO)
+    ALICUOTA_IVA, UNIDAD, TIPO_ATRIBUTO)
 
 
 class Cliente(models.Model):
@@ -83,12 +85,12 @@ class Factura(models.Model):
     concepto = models.IntegerField(u"Concepto", default=3, choices=CONCEPTO)
     forma_pago = models.IntegerField(u"Forma de pago", choices=FORMA_PAGO)
     # Importe total de la factura (debe ser igual a la suma de
-    # imp_tot_conc + imp_op_ex + imp_neto + imp_iva + imp_trib)
+    # imp_total_conceptos + imp_op_exentas + importe_neto + importe_iva + importe_tributos)
     importe_total = models.DecimalField(u"Importe Total", max_digits=18, decimal_places=3)
     # Importe total de conceptos no gravados por el IVA
     importe_total_conceptos = models.DecimalField(
         u"Importe total de conceptos no gravados", max_digits=18, decimal_places=3)
-    # Importe neto (gravado por el IVA) de la factura (igual a la suma de base_imp para todas las alicuotas)
+    # Importe neto (gravado por el IVA) de la factura (igual a la suma de base_imponible para todas las alicuotas)
     importe_neto = models.DecimalField(u"Importe neto", max_digits=18, decimal_places=3)
     # Importe del IVA liquidado (igual a la suma de importe_iva para todas las alícuotas)
     importe_iva = models.DecimalField(u"Importe IVA", max_digits=18, decimal_places=3)
@@ -141,6 +143,24 @@ class Factura(models.Model):
                 self.punto_venta,
                 self.numero_cbte_hasta)
 
+    def recalcular(self):
+        """
+        Al llamar a este método, se vuelven a calcular los totales de la factura,
+        recorriendo los items de la factura y los tributos adicionales.
+        Este método establece las alícuotas IVA a informar.
+
+        """
+        # recorro items
+        total_neto = 0
+        a_iva = defaultdict(Decimal)
+        for item in self.items.all():
+            total_neto += item.neto
+            a_iva[item.iva] = a_iva[item.iva] + item.valor_iva  # acumulo el iva para cada alicuota
+        for iva in a_iva:
+            alicuota = AlicuotaIVAFactura()
+            # TODO: asociar alicuotas ivas
+
+
 
 class ItemFactura(models.Model):
     """
@@ -150,7 +170,7 @@ class ItemFactura(models.Model):
     factura = models.ForeignKey(Factura, verbose_name=u"Factura", related_name="items")
     descripcion = models.CharField(u"Descripción", max_length=400, null=True, blank=True)
     precio = models.DecimalField(u"Precio", max_digits=18, decimal_places=3)
-    iva = models.IntegerField(u"Olicuota IVA", choices=OLICUOTA_IVA)
+    iva = models.IntegerField(u"Alícuota IVA", choices=ALICUOTA_IVA)
     cantidad = models.IntegerField(u"Cantidad")
     unidad = models.IntegerField(u"Unidad", choices=UNIDAD)
     codigo = models.CharField(max_length=400, null=True, blank=True)
@@ -164,23 +184,32 @@ class ItemFactura(models.Model):
         verbose_name = "Item de factura"
         verbose_name_plural = "Ítemes de factura"
 
+    @property
+    def neto(self):
+        return self.precio * self.cantidad
 
-class OlicuotaIVAFactura(models.Model):
+    @property
+    def valor_iva(self):
+        return self.neto * Decimal(dict(ALICUOTA_IVA)[self.iva]) / 100
+
+
+
+class AlicuotaIVAFactura(models.Model):
     """
-    Representa cada olicuota IVA de la factura.
+    Representa cada alicuota IVA de la factura.
 
     """
-    factura = models.ForeignKey(Factura, verbose_name=u"Factura", related_name="olicuotas_iva")
-    olicuota_iva = models.IntegerField(u"Olícuota IVA", choices=OLICUOTA_IVA)
+    factura = models.ForeignKey(Factura, verbose_name=u"Factura", related_name="alicuotas_iva")
+    alicuota_iva = models.IntegerField(u"Alícuota IVA", choices=ALICUOTA_IVA)
     # Además, guardo si valor decimal, por si cambian en algún momento
-    olicuota_iva_valor = models.DecimalField(u"Valor Olícuota IVA", max_digits=18, decimal_places=3)
+    alicuota_iva_valor = models.DecimalField(u"Valor Alícuota IVA", max_digits=18, decimal_places=3)
     base_imponible = models.DecimalField(u"Base imponible", max_digits=18, decimal_places=3)
     importe_iva = models.DecimalField(u"Importe liquidado", max_digits=18, decimal_places=3)
 
     def __unicode__(self):
         return u"{} ({}%)".format(
             self.base_imponible,
-            OLICUOTA_IVA[self.olicuota_iva][1]
+            ALICUOTA_IVA[self.olicuota_iva][1]
         )
 
 
@@ -193,7 +222,7 @@ class TributoFactura(models.Model):
     tributo = models.IntegerField(u"Tributo", choices=TIPO_ATRIBUTO)
     descripcion = models.CharField(U"Descripción", max_length=400)
     base_imponible = models.DecimalField(u"Base imponible", max_digits=18, decimal_places=3)
-    alicuota = models.DecimalField(u"Olícuota", max_digits=18, decimal_places=3)
+    alicuota = models.DecimalField(u"Alícuota", max_digits=18, decimal_places=3)
     importe = models.DecimalField(u"Importe liquidado", max_digits=18, decimal_places=3)
 
     class Meta:
